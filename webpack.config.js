@@ -6,25 +6,29 @@ module.exports = {
   entry: [
     'webpack-dev-server/client?http://localhost:3000',
     'webpack/hot/only-dev-server',
-    './scripts/index'
+    './app/index'
   ],
   output: {
     path: path.join(__dirname, 'build'),
     filename: 'bundle.js',
-    publicPath: '/scripts/'
+    publicPath: '/app/'
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],
   resolve: {
-    extensions: ['', '.js', '.jsx']
+    extensions: ['', '.js'],
   },
   module: {
     loaders: [{
-      test: /\.jsx?$/,
+      test: /\.js$/,
       loaders: ['react-hot', 'babel'],
-      include: path.join(__dirname, 'scripts')
+      include: [
+        path.join(__dirname, 'app'),
+        // path.join(__dirname, '../css')
+      ]
     }]
   }
 };
+
