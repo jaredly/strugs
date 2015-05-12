@@ -1,0 +1,31 @@
+{
+  "name": "strugs",
+  "version": "0.0.0",
+  "description": "Structural Editing for Javascript",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaredly/strugs.git"
+  },
+  "keywords": [
+  ],
+  "author": "Dan Abramov <dan.abramov@me.com> (http://github.com/gaearon)",
+  "author": "Jared Forsyth <jared@jaredforsyth.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jaredly/strugs/issues"
+  },
+  "url": "https://github.com/jaredly/strugs.git",
+  "devDependencies": {
+    "babel-core": "^5.1.11",
+    "babel-loader": "^5.0.0",
+    "react-hot-loader": "^1.2.2",
+    "webpack": "^1.7.2",
+    "webpack-dev-server": "^1.7.0"
+  },
+  "dependencies": {
+    "react": "^0.13.0"
+  }
+}
