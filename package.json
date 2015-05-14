@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "acorn": "^1.0.3",
+    "babel-core": "^5.3.3",
     "rcss": "^0.1.5",
     "react": "^0.13.0"
   }

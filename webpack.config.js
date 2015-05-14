@@ -19,9 +19,20 @@ module.exports = {
   ],
   resolve: {
     extensions: ['', '.js'],
+    alias: {
+      react: path.join(__dirname, 'node_modules/react'),
+    },
   },
   module: {
     loaders: [{
+      test: /\.js$/,
+      loaders: ['babel'],
+      include: [
+        path.join(__dirname, '../nm/flammable'),
+        // path.join(__dirname, '../css')
+      ]
+    },
+    {
       test: /\.js$/,
       loaders: ['react-hot', 'babel'],
       include: [

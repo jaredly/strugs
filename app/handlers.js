@@ -1,99 +1,13 @@
 
+import Input from './input'
 import React from 'react'
 import css from 'rcssplus'
 
-const {styles, decs} = css`
-body {
-  padding-left: 10px
-}
-program {
-  @body
-  border: 1px solid #aaa
-  white-space: pre
-}
-input {
-  border: none;
-  padding: 0 4px;
-  box-sizing: content-box;
-}
-raw {
-  background-color: #f0f0f0
-  padding: 10px 20px
-  border-radius: 5px
-  white-space: pre-wrap
-}
-block {
-  @body
-}
-ident {
-  @input
-  color: green
-}
-literal {
-  @input
-  color: red
-}
-`
-
-export default class Strugs extends React.Component {
-  render() {
-    return <div>
-      Strugs
-      {handle(this.props.ast)}
-      <pre className={styles.raw}>{JSON.stringify(this.props.ast, null, 2)}</pre>
-    </div>
-  }
-}
-
-function handle(node, key) {
+export default function handle(node, key) {
   if (handlers[node.type]) {
     return handlers[node.type](node, key)
   }
   return <div key={key}>Unknown type {node.type}</div>
-}
-
-class Input extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-
-  componentDidUpdate() {
-    this.resize()
-  }
-
-  componentDidMount() {
-    this.resize()
-    window.addEventListener('resize', this.resize)
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.resize)
-  }
-
-  resize() {
-    const shadow = React.findDOMNode(this.shadow)
-    const input = React.findDOMNode(this.input)
-    const style = window.getComputedStyle(shadow)
-    let width = style.width
-    if (this.props.type === 'number') {
-      width = parseInt(width, 10) + 20 + 'px'
-    }
-    input.style.width = width
-  }
-
-  render() {
-    return <span style={{position: 'relative'}}>
-      <input style={{
-      }} ref={i => this.input = i} {...this.props}/>
-      <span ref={i => this.shadow = i} style={{
-        visibility: 'hidden',
-        top: 0,
-        left: 0,
-        whiteSpace: 'nowrap',
-        position: 'absolute',
-      }}>{this.props.value}</span>
-    </span>
-  }
 }
 
 const handlers = {
@@ -159,4 +73,34 @@ const handlers = {
   }
 
 }
+
+const {styles, decs} = css`
+body {
+  padding-left: 10px
+}
+program {
+  @body
+  border: 1px solid #aaa
+  white-space: pre
+}
+input {
+  border: none;
+  padding: 0 4px;
+  box-sizing: content-box;
+  :focus {
+  outline: none
+  }
+}
+block {
+  @body
+}
+ident {
+  @input
+  color: green
+}
+literal {
+  @input
+  color: red
+}
+`
 
