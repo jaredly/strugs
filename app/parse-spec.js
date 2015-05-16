@@ -25,8 +25,8 @@ export default function parse(text) {
       buff.push(line)
     }
   })
-  console.log(JSON.stringify(system['interface']['ArrowExpression'], null, 2))
-  console.dir(system['enum']['AssignmentOperator'])
+  // console.log(JSON.stringify(system['interface']['ArrowExpression'], null, 2))
+  // console.dir(system['enum']['AssignmentOperator'])
   // console.log(system)
   return system
 }
@@ -79,12 +79,21 @@ function parseIfaceVal(val) {
     val = val.slice(1, -1).trim()
   }
   res.alts = val.split(/\s*\|\s*/g).map(t => t.trim())
+  if (res.alts[0][0] === '"') {
+    res.alts = res.alts.map(m => m.slice(1, -1))
+    res.isEnum = true
+  }
   return res
 }
 
 function parseRender(render) {
   let at = 0
   let parts = []
+  let conditional = 'default'
+  if (render[0] === '?') {
+    conditional = render.split(' ')[0].slice(1)
+    render = render.slice(conditional.length + 2)
+  }
   render.replace(/\<\w+,?\>/g, function (matched, pos) {
     parts.push(render.slice(at, pos))
     at = pos + matched.length
@@ -94,6 +103,6 @@ function parseRender(render) {
     if (sep) part.sep = sep
     parts.push(part)
   })
-  return parts
+  return {cond: conditional, render: parts}
 }
 

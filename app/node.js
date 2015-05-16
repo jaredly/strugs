@@ -9,6 +9,10 @@ import SmartInput from './smart-input'
 const PT = React.PropTypes
 
 @fluxify({
+  events: (props, events) => [events.nodeView(props.id)],
+  sample: props => ({
+    selection: 'selection',
+  }),
   data: props => ({
     nodes: {
       nodes: {
@@ -26,6 +30,15 @@ export default class Node extends React.Component {
     focused: PT.array,
   }
 
+  static propTypes = {
+    id: PT.string,
+
+    // supplied by flux
+    node: PT.object,
+    onChange: PT.func,
+    onFocus: PT.func,
+  }
+
   static handle(id) {
     return <Node id={id}/>
   }
@@ -35,10 +48,28 @@ export default class Node extends React.Component {
   }
 
   render() {
-    if (!this.props.node) return <span>Unknowd</span>
+    if (!this.props.node) return <span>Unknode {JSON.stringify(this.props.id || 'not found')}</span>
     const type = this.props.node.type
     const cls = styles.node + (this.props.node.$focused ? ' ' + styles.selected : '')
-    const child = handlers[type](this.props.node, this.onChange.bind(this), this.props.onFocus)
+
+    if (type === 'Identifier') {
+      return <SmartInput
+        onFocus={this.props.onFocus}
+        focused={this.props.node.$focused}
+        onChange={val => this.onChange({name: {$set: val}})}
+        className={cls + ' ' + styles.input}
+        value={this.props.node.name}/>
+    }
+    if (type === 'Literal') {
+      return <SmartInput
+        onFocus={this.props.onFocus}
+        focused={this.props.node.$focused}
+        onChange={val => this.onChange({value: {$set: val}, raw: {$set: val}})}
+        className={cls + ' ' + styles.input}
+        value={this.props.node.value}/>
+    }
+
+    const child = render(type, this.props.node, this.onChange.bind(this), this.props.onFocus)
     if (child.type === 'div') {
       return <div className={cls}>
         {child}
@@ -50,120 +81,61 @@ export default class Node extends React.Component {
   }
 }
 
-/*
-const spec = {
-  Program: {
-    render: {
-      attr: 'body',
-      type: ListOf(Statement),
-    },
-    block: true,
-  },
-  Identifier: {
-    render: '|name',
-  },
-  VariableDeclaration: {
-    render: ['.kind', 
-  },
-}
-*/
+import spec from './spec'
+const nodeTypes = spec['interface']
+const enums = spec['enum']
 
-const handlers = {
-  Program(node) {
-    return <div className={styles.program}>
-      {node.body.map((item, i) => <Node id={item} key={item}/>)}
-    </div>
-  },
-
-  Identifier(node, change, onFocus) {
-    return <SmartInput
-      className={styles.ident}
-      focused={node.$focused}
-      onChange={val => change({name: {$set: val}})}
-      onFocus={onFocus}
-      value={node.name}/>
-  },
-
-  VariableDeclaration(node) {
-    return <div className={styles.variable}>
-      {node.kind}
-      {node.declarations.map((node, i) => <Node id={node} key={node}/>)}
-    </div>
-  },
-
-  VariableDeclarator(node) {
-    return <span className={styles.vardec}>
-      <Node id={node.id} key={node.id}/>
-      {node.init ? '=' : null}
-      {node.init ? <Node id={node.init} key={node.init}/> : null}
-    </span>
-  },
-
-  Literal(node, change, onFocus) {
-    if ('number' === typeof node.value) {
-      return <SmartInput type='number'
-        onFocus={onFocus}
-        focused={node.$focused}
-        onChange={val => change({value: {$set: parseInt(val, 10)}, raw: {$set: val}})}
-        value={node.raw} className={styles.literal}/>
-    }
-    if ('string' === typeof node.value) {
-      return <span>"
-        <SmartInput type='text'
-          onFocus={onFocus}
-          focused={node.$focused}
-          onChange={val => change({value: {$set: val}})}
-          value={node.value} className={styles.literal}/>
-      "</span>
-    }
-    return <SmartInput
-      onFocus={onFocus}
-      value={node.raw}
-      focused={node.$focused}
-      className={styles.literal}/>
-  },
-
-  BlockStatement(node) {
-    return <div className={styles.block}>
-      {node.body.map((item, i) => <Node id={item} key={item}/>)}
-    </div>
-  },
-
-  ReturnStatement(node) {
-    return <div className={styles['return']}>return <Node id={node.argument} key={node.argument}/>
-    </div>
-  },
-
-  BinaryExpression(node) {
-    return <span className={styles.bin}>
-      <Node id={node.left} key={node.left}/>
-      {node.operator}
-      <Node id={node.right} key={node.right}/>
-    </span>
-  },
-
-  FunctionDeclaration(node) {
-    const params = []
-    node.params.forEach((param, i) => {
-      params.push(<Node id={param} key={param}/>)
-      params.push(<span>, </span>)
-    })
-    return <div className={styles.functiondecl}>
-      function
-      <Node id={node.id} key={node.id}/>
-      ({params.slice(0, -1)})
-      {'{'}
-      <Node id={node.body} key={node.body}/>
-      {'}'}
-    </div>
+function render(type, node, onChange, onFocus) {
+  if (!nodeTypes[node.type]) {
+    return <span>Unknown node type {node.type}</span>
   }
 
+  const spec = nodeTypes[node.type]
+  if (!spec.renders.length) {
+    let items = []
+    Object.keys(spec.attrs).forEach(name => {
+      if (name === 'type') return
+      if (Array.isArray(node[name])) {
+        items = items.concat(node[name].map(id => <Node id={id}/>))
+      } else {
+        items.push(<Node id={node[name]}/>)
+      }
+    })
+    return <span children={items}/>
+  }
+
+  let format
+  for (let i=0; i<spec.renders.length; i++) {
+    if (spec.renders[i].cond === 'default' || !!node[spec[i].renders.cond]) {
+      format = spec.renders[i].render
+      break
+    }
+  }
+
+  let parts = []
+  format.forEach(part => {
+    if ('string' === typeof part) return parts.push(part)
+    const val = node[part.attr]
+    // if (!val) debugger
+    if ('object' !== typeof val && (!val.length || val.length < 20)) {
+      return parts.push(val)
+    }
+    // if ('string' === typeof val) return parts.push(val)
+    if (!Array.isArray(val)) {
+      return parts.push(<Node id={val}/>)
+    }
+    parts = parts.concat(val.map(child => <Node id={child}/>))
+  })
+
+  if (spec.inherits.indexOf('Statement') !== -1 ||
+     spec.inherits.indexOf('Declaration') !== -1) {
+    parts.push(<br/>)
+  }
+
+  return <span children={parts}/>
 }
 
 const {styles, decs} = css`
-selected {
-  background-color: #ddf
-}
 body {
   padding-left: 10px
 }
@@ -197,6 +169,9 @@ literal {
   color: red
 }
 node {
+}
+selected {
+  background-color: #ddf
 }
 `
 
