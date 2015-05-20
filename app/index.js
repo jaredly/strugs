@@ -13,6 +13,7 @@ let c = "aweom"
 `
 
 const flux = makeFlux(ex)
+window.flux = flux
 React.render(flux.wrap(<App initial={ex}/>),
              document.getElementById('root'))
 

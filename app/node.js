@@ -9,7 +9,7 @@ import SmartInput from './smart-input'
 const PT = React.PropTypes
 
 @fluxify({
-  events: (props, events) => [events.nodeView(props.id)],
+  events: (props, events) => [events('nodes', 'view', props.id)],
   sample: props => ({
     selection: 'selection',
   }),
